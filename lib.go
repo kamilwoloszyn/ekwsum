@@ -72,6 +72,21 @@ type EkwNumber struct {
 	geoID      string
 	lamID      string
 	sumControl sumControl
+
+	validationSettings ValidationSettings
+	valid              bool
+}
+
+type ValidationSettings struct {
+	validateControlSum bool
+}
+
+type ValidationOpts func(e *EkwNumber)
+
+func WithValidationSum() ValidationOpts {
+	return func(e *EkwNumber) {
+		e.validationSettings.validateControlSum = true
+	}
 }
 
 type sumControl struct {
@@ -81,7 +96,7 @@ type sumControl struct {
 
 // NewEkwNumber parses, simple validation included
 // to parse correctly with required fields.
-func NewEkwNumber(raw string) (EkwNumber, error) {
+func NewEkwNumber(raw string, opts ...ValidationOpts) (EkwNumber, error) {
 	parts := strings.Split(raw, ekwPartsSeparator)
 	var ekw EkwNumber
 	switch len(parts) {
@@ -105,12 +120,17 @@ func NewEkwNumber(raw string) (EkwNumber, error) {
 	default:
 		return EkwNumber{}, ErrUnsupported
 	}
-
+	for _, o := range opts {
+		o(&ekw)
+	}
 	return ekw, nil
 }
 
 // Validate checks whether first and second part are present and valid,
 // also validates sum control if given.
+//
+// Note: Sum control validation fail is not a critical error so it can be
+// skipped for calculation sum.
 func (e EkwNumber) Validate() error {
 	if !geoIDRegex.MatchString(e.geoID) {
 		return ErrValidationFirstPartUnknownFormat
@@ -118,23 +138,32 @@ func (e EkwNumber) Validate() error {
 	if !lamIDRegex.MatchString(e.lamID) {
 		return ErrValidationSecondPartUnknownFormat
 	}
+	e.valid = true
 
-	switch len(e.sumControl.value) {
-	case 0:
-		return nil
-	default:
-		if e.sumControl.value != e.SumControl() {
+	// optional validation
+	if e.validationSettings.validateControlSum {
+		prevSumControl := e.sumControl.value
+		if prevSumControl != e.SumControl() {
 			return ErrValidationSumControl
 		}
 	}
+
 	return nil
 }
 
-func (e EkwNumber) SumControl() string {
+// SumControl estimates the sum control for given
+// ekw id. It returns empty strings if calculation
+// is not possible due to invalid ekw. To avoid this,
+// we strongly recommend to run Validate before.
+func (e *EkwNumber) SumControl() string {
+	// in order to ensure that was validated
+	if !e.valid {
+		return ""
+	}
 	if e.sumControl.valid {
 		return e.sumControl.value
 	}
-	base := e.geoID + e.lamID
+	base := strings.ToUpper(e.geoID + e.lamID)
 	var encodedStr []uint16
 	for _, c := range base {
 		en, ok := converterCharMapRules[fmt.Sprintf("%c", c)]

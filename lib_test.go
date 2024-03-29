@@ -135,12 +135,15 @@ func TestValidate(t *testing.T) {
 			expectedValidationResult: ErrValidationFirstPartUnknownFormat,
 		},
 		{
-			testName: "invalid sum control - validation should fail",
+			testName: "invalid sum control, checking enabled - validation should fail",
 			givenEkw: EkwNumber{
 				geoID: "PR1J",
 				lamID: "00104856",
 				sumControl: sumControl{
 					value: "1",
+				},
+				validationSettings: ValidationSettings{
+					validateControlSum: true,
 				},
 			},
 			expectedValidationResult: ErrValidationSumControl,
@@ -172,6 +175,7 @@ func TestSumControl(t *testing.T) {
 				sumControl: sumControl{
 					value: "8",
 				},
+				valid: true,
 			},
 			expectedSum: "8",
 		},
@@ -183,6 +187,7 @@ func TestSumControl(t *testing.T) {
 				sumControl: sumControl{
 					value: "8",
 				},
+				valid: true,
 			},
 			expectedSum: "0",
 		},
@@ -191,6 +196,7 @@ func TestSumControl(t *testing.T) {
 			givenEkw: EkwNumber{
 				geoID: "PR1J",
 				lamID: "8",
+				valid: true,
 			},
 			expectedSum: "",
 		},
@@ -199,6 +205,7 @@ func TestSumControl(t *testing.T) {
 			givenEkw: EkwNumber{
 				geoID: "FR1434252X?",
 				lamID: "001!04856",
+				valid: true,
 			},
 			expectedSum: "",
 		},
@@ -211,6 +218,7 @@ func TestSumControl(t *testing.T) {
 					value: "300",
 					valid: true,
 				},
+				valid: true,
 			},
 			expectedSum: "300",
 		},
