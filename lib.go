@@ -131,7 +131,7 @@ func NewEkwNumber(raw string, opts ...ValidationOpts) (EkwNumber, error) {
 //
 // Note: Sum control validation fail is not a critical error so it can be
 // skipped for calculation sum.
-func (e EkwNumber) Validate() error {
+func (e *EkwNumber) Validate() error {
 	if !geoIDRegex.MatchString(e.geoID) {
 		return ErrValidationFirstPartUnknownFormat
 	}
