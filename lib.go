@@ -188,3 +188,15 @@ func (e *EkwNumber) SumControl() string {
 	e.sumControl.valid = true
 	return e.sumControl.value
 }
+
+// LamID returns the second part of ekw number,
+// which is lam ID. It returns empty string if
+// ekw is not valid or lam ID is not set.
+// It is obligatory to run Validate before
+// calling this method to ensure that ekw is valid.
+func (e *EkwNumber) LamID() string {
+	if !e.valid {
+		return ""
+	}
+	return e.lamID
+}
